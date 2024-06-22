@@ -1,29 +1,29 @@
-from flask import Flask, abort
-from markupsafe import escape
+from flask import Flask, render_template, abort
 
 app = Flask(__name__)
-app.config['DEBUG'] = True
+
+@app.errorhandler(404)
+def page_not_found(e):
+    return render_template('404.html'), 404
+@app.errorhandler(500)
+def internal_error(error):
+    return render_template('500.html'), 500
+
+@app.route('/500')
+def error500():
+    abort(500)
 
 @app.route('/')
-@app.route('/index/')
-def hello_world():
-    return '<h1>Hello, World!</h1>'
+def index():
+    return render_template('index.html')
 
-@app.route('/about/')
-def about():
-    return '<h1>This is a Flask Web applications.</h1>'
-
-@app.route('/capitalize/<word>')
-def capitalize(word):
-    return '<h1>{}</h1>'.format(escape(word.capitalize()))
-@app.route('/add/<int:n1>/<int:n2>')
-def add(n1, n2):
-    return '<h1>{}</h1>'.format(escape(n1 + n2))
-
-@app.route('/users/<int:user_id>/')
-def greet_user(user_id):
-    users = ['Bod','Jane', 'Adam']
+@app.route('/messages/<int:idx>')
+def messages(idx):
+    app.logger.info('Building the message list...')
+    messages = ['message 0', 'message 1', 'message 2', 'message 3']
     try:
-        return '<h2>Hi {}</h2>'.format(users[user_id])
+        app.logger.debug('Get message with the index:{}'.format(idx))
+        return render_template('messages.html', messages=messages[idx])
     except IndexError:
         abort(404)
+           
