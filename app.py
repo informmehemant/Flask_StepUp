@@ -1,29 +1,49 @@
-from flask import Flask, render_template, abort
+from flask import Flask, render_template, redirect, url_for
+from forms import CoursesForm
+import sqlite3
 
 app = Flask(__name__)
+app.config['SECRET_KEY'] = 'your secret key'
 
-@app.errorhandler(404)
-def page_not_found(e):
-    return render_template('404.html'), 404
-@app.errorhandler(500)
-def internal_error(error):
-    return render_template('500.html'), 500
 
-@app.route('/500')
-def error500():
-    abort(500)
+courses_list = [{
+    'title': 'Python 101',
+    'description': 'Learn Python basics',
+    'price': 34,
+    'available': True,
+    'level': 'Beginner'
+    }]
+
+
+def get_db_connection():
+    conn = sqlite3.connect('database.db')
+    conn.row_factory = sqlite3.Row
+    return conn
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM posts")
+    posts = cur.fetchall()
+    conn.close()
+    return render_template('index.html', posts=posts)
 
-@app.route('/messages/<int:idx>')
-def messages(idx):
-    app.logger.info('Building the message list...')
-    messages = ['message 0', 'message 1', 'message 2', 'message 3']
-    try:
-        app.logger.debug('Get message with the index:{}'.format(idx))
-        return render_template('messages.html', messages=messages[idx])
-    except IndexError:
-        abort(404)
-           
+
+# @app.route('/', methods=('GET', 'POST'))
+# def index():
+#     form = CoursesForm()
+#     if form.validate_on_submit():
+#         courses_list.append({
+#             'title': form.title.data,
+#             'description': form.description.data,
+#             'price': form.price.data,
+#             'available': form.available.data,
+#             'level': form.level.data
+#         })
+#         return redirect(url_for('courses'))
+#     return render_template('index.html', form=form)
+
+# @app.route('/courses')
+# def courses():
+#     return render_template('courses.html', courses_list=courses_list)
