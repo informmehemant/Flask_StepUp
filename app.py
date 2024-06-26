@@ -1,4 +1,4 @@
-from flask import Flask, render_template, redirect, url_for
+from flask import Flask, render_template, redirect, url_for, flash
 from forms import CoursesForm
 import sqlite3
 
@@ -28,22 +28,11 @@ def index():
     posts = cur.fetchall()
     conn.close()
     return render_template('index.html', posts=posts)
+@app.route('/create/', methods=['GET','POST'])
+def create():
+    return render_template('create.html')
 
 
-# @app.route('/', methods=('GET', 'POST'))
-# def index():
-#     form = CoursesForm()
-#     if form.validate_on_submit():
-#         courses_list.append({
-#             'title': form.title.data,
-#             'description': form.description.data,
-#             'price': form.price.data,
-#             'available': form.available.data,
-#             'level': form.level.data
-#         })
-#         return redirect(url_for('courses'))
-#     return render_template('index.html', form=form)
 
-# @app.route('/courses')
-# def courses():
-#     return render_template('courses.html', courses_list=courses_list)
+
+
