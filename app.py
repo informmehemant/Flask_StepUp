@@ -1,38 +1,38 @@
-from flask import Flask, render_template, redirect, url_for, flash
-from forms import CoursesForm
-import sqlite3
-
+from flask import Flask, render_template, request, url_for, redirect
+import psycopg2
+import os
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'your secret key'
-
-
-courses_list = [{
-    'title': 'Python 101',
-    'description': 'Learn Python basics',
-    'price': 34,
-    'available': True,
-    'level': 'Beginner'
-    }]
-
 
 def get_db_connection():
-    conn = sqlite3.connect('database.db')
-    conn.row_factory = sqlite3.Row
+    conn = psycopg2.connect(host='localhost',
+                            database='flask_db',
+                            port=5432, 
+                            user = os.environ['DB_USER'], 
+                            password = os.environ['DB_PASS']
+    )
     return conn
 
 @app.route('/')
 def index():
     conn = get_db_connection()
     cur = conn.cursor()
-    cur.execute("SELECT * FROM posts")
-    posts = cur.fetchall()
-    conn.close()
-    return render_template('index.html', posts=posts)
-@app.route('/create/', methods=['GET','POST'])
+    cur.execute('SELECT * FROM books;')
+    books = cur.fetchall()
+    return render_template('index.html', books=books)
+
+@app.route('/create/', methods=['POST','GET'])
 def create():
+    if request.method == 'POST':
+        title = request.form['title']
+        author = request.form['author']
+        pages_num = request.form['pages_num']
+        review = request.form['review']
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute('INSERT INTO books (title, author, pages_num, review) VALUES (%s, %s, %s, %s)',
+                    (title, author, pages_num, review))
+        conn.commit()
+        cur.close()
+        conn.close()
+        return redirect(url_for('index'))
     return render_template('create.html')
-
-
-
-
-
