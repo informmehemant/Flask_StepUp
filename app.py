@@ -1,38 +1,27 @@
-from flask import Flask, render_template, request, url_for, redirect
-import psycopg2
 import os
+from flask import Flask , render_template, request, url_for , redirect
+from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.sql import func 
+
+
+basedir = os.path.abspath(os.path.dirname(__file__))
 app = Flask(__name__)
 
-def get_db_connection():
-    conn = psycopg2.connect(host='localhost',
-                            database='flask_db',
-                            port=5432, 
-                            user = os.environ['DB_USER'], 
-                            password = os.environ['DB_PASS']
-    )
-    return conn
+app.config['SQLALCHEMY_DATABASE'] =\
+    'sqlite:///' + os.path.join(basedir, 'database.db')
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-@app.route('/')
-def index():
-    conn = get_db_connection()
-    cur = conn.cursor()
-    cur.execute('SELECT * FROM books;')
-    books = cur.fetchall()
-    return render_template('index.html', books=books)
+db = SQLAlchemy(app)    
 
-@app.route('/create/', methods=['POST','GET'])
-def create():
-    if request.method == 'POST':
-        title = request.form['title']
-        author = request.form['author']
-        pages_num = request.form['pages_num']
-        review = request.form['review']
-        conn = get_db_connection()
-        cur = conn.cursor()
-        cur.execute('INSERT INTO books (title, author, pages_num, review) VALUES (%s, %s, %s, %s)',
-                    (title, author, pages_num, review))
-        conn.commit()
-        cur.close()
-        conn.close()
-        return redirect(url_for('index'))
-    return render_template('create.html')
+
+class Student(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    firstname = db.Column(db.String(1000), nullable=False)
+    lastname = db.Column(db.String(1000), nullable=False)
+    email = db.Column(db.String(1000), nullable=False)
+    age = db.Column(db.Integer)
+    created_at = db.Column(db.DateTime(timezone=True), server_default=func.now())
+    bio = db.Column(db.Text)
+
+    def __repr__(self):
+        return f'<Student {self.firstname}>'
